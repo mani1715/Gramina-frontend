@@ -56,6 +56,12 @@ const FindGigPage = () => {
       const data = Array.isArray(response.data) ? response.data : (response.data?.jobs || response.data?.data || []);
       setAllJobs(data);
       setJobs(data);
+      // Immediately set displayJobs with original data so list shows right away
+      setDisplayJobs(data.map(j => ({
+        ...j,
+        _displayTitle: j.title,
+        _displayDesc: j.description
+      })));
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
       toast.error(language === 'en' ? 'Failed to load jobs' : 'ఉద్యోగాలు లోడ్ చేయడంలో విఫలమైంది');
@@ -113,35 +119,40 @@ const FindGigPage = () => {
     }
 
     setJobs(filtered);
+    // Immediately update displayJobs so list doesn't wait for translation
+    setDisplayJobs(filtered.map(j => ({
+      ...j,
+      _displayTitle: j.title,
+      _displayDesc: j.description
+    })));
   };
 
-  // Translate jobs when language or filtered job list changes
+  // Translate jobs when language changes to Telugu (English already set immediately)
   useEffect(() => {
     const applyTranslation = async () => {
-      if (jobs.length === 0) { setDisplayJobs([]); return; }
-      
-      // Skip translation for English - use original data directly
-      if (language === 'en') {
-        setDisplayJobs(jobs.map(j => ({
-          ...j,
-          _displayTitle: j.title,
-          _displayDesc: j.description
-        })));
-        return;
+      // Skip if no jobs or English (already handled in filterJobs/fetchAllJobs)
+      if (jobs.length === 0 || language === 'en') { 
+        return; 
       }
       
-      const targetLang = 'telugu';
-      const titleTexts = jobs.map(j => j.title || '');
-      const descTexts = jobs.map(j => j.description || '');
-      const [transTitle, transDesc] = await Promise.all([
-        translate(titleTexts, targetLang),
-        translate(descTexts, targetLang)
-      ]);
-      setDisplayJobs(jobs.map((j, i) => ({
-        ...j,
-        _displayTitle: transTitle[i] || j.title,
-        _displayDesc: transDesc[i] || j.description
-      })));
+      // For Telugu, translate in background
+      try {
+        const targetLang = 'telugu';
+        const titleTexts = jobs.map(j => j.title || '');
+        const descTexts = jobs.map(j => j.description || '');
+        const [transTitle, transDesc] = await Promise.all([
+          translate(titleTexts, targetLang),
+          translate(descTexts, targetLang)
+        ]);
+        setDisplayJobs(jobs.map((j, i) => ({
+          ...j,
+          _displayTitle: transTitle[i] || j.title,
+          _displayDesc: transDesc[i] || j.description
+        })));
+      } catch (error) {
+        console.error('Translation failed:', error);
+        // Keep original text if translation fails
+      }
     };
     applyTranslation();
   }, [jobs, language]); // eslint-disable-line
