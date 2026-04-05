@@ -8,7 +8,8 @@ import axios from 'axios';
 import { MessageCircle, X, ChevronLeft, Send, Loader2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 const GlobalChatWidget = () => {
   const { t, language } = useLanguage();

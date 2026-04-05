@@ -32,7 +32,8 @@ import {
 import { toast } from 'sonner';
 import GigChatModal from '../components/GigChatModal';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 /* ─── Helpers ────────────────────────────────────────────────── */
 const getWageNumber = (wage = '') => parseInt(String(wage || '').replace(/[^0-9]/g, '') || '0', 10);
@@ -96,7 +97,8 @@ const GiveGigPage = () => {
   const fetchMyJobs = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/my-jobs`, { withCredentials: true });
-      setMyJobs(res.data);
+      const data = Array.isArray(res.data) ? res.data : (res.data?.jobs || []);
+      setMyJobs(data);
     } catch (err) {
       console.error('Failed to fetch jobs:', err);
     } finally {

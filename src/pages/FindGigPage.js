@@ -22,7 +22,8 @@ import { Slider } from '../components/ui/slider';
 import { toast } from 'sonner';
 import { useTranslation } from '../hooks/useTranslation';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 const getWageNumber = (wage = '') => parseInt(String(wage || '').replace(/[^0-9]/g, '') || '0', 10);
 

@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+// If API_URL is undefined, default it to `/` so it doesn't use `undefined/`
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 // Key used to track whether the user has ever logged in this browser
 const SESSION_KEY = 'gm_has_session';
@@ -27,6 +29,9 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(`${API_URL}/api/auth/me`, {
         withCredentials: true
       });
+      if (typeof response.data === 'string') {
+        throw new Error('Received HTML string instead of JSON. Check the Backend URL.');
+      }
       setUser(response.data);
     } catch (error) {
       // Session expired or cookie gone — clear the marker
@@ -47,6 +52,9 @@ export const AuthProvider = ({ children }) => {
       { email, password },
       { withCredentials: true }
     );
+    if (typeof response.data === 'string') {
+      throw new Error('Invalid backend response');
+    }
     localStorage.setItem(SESSION_KEY, '1');
     setUser(response.data);
     return response.data;

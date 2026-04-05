@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 const AppliedGigsPage = () => {
   const { t, language, toggleLanguage } = useLanguage();

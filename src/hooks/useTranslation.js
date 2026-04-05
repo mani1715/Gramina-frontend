@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
 /**
  * useTranslation — translates an array of text strings via the backend.
