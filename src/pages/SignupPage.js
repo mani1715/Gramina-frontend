@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 const SignupPage = () => {
   const { t, language, toggleLanguage } = useLanguage();
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -97,6 +97,8 @@ const SignupPage = () => {
         phone: formData.phone,
         area: formData.area
       });
+      // Auto-login so the session cookie is active and session key is set
+      await login(formData.email, formData.password);
       toast.success(language === 'en' ? 'Registration successful! Welcome to GramaMitra!' : 'రిజిస్ట్రేషన్ విజయవంతం! GramaMitra కి స్వాగతం!');
       navigate('/dashboard');
     } catch (error) {
