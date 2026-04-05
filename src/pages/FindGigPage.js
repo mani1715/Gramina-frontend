@@ -52,8 +52,9 @@ const FindGigPage = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/jobs`);
-      setAllJobs(response.data);
-      setJobs(response.data);
+      const data = Array.isArray(response.data) ? response.data : (response.data?.jobs || response.data?.data || []);
+      setAllJobs(data);
+      setJobs(data);
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
       toast.error(language === 'en' ? 'Failed to load jobs' : 'ఉద్యోగాలు లోడ్ చేయడంలో విఫలమైంది');

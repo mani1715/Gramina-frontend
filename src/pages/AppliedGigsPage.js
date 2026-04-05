@@ -35,8 +35,10 @@ const AppliedGigsPage = () => {
         axios.get(`${API_URL}/api/my-applications`, { withCredentials: true }),
         axios.get(`${API_URL}/api/my-jobs`, { withCredentials: true })
       ]);
-      setApplications(appsResponse.data);
-      setMyJobs(jobsResponse.data);
+      const appsData = Array.isArray(appsResponse.data) ? appsResponse.data : (appsResponse.data?.applications || appsResponse.data?.data || []);
+      const jobsData = Array.isArray(jobsResponse.data) ? jobsResponse.data : (jobsResponse.data?.jobs || jobsResponse.data?.data || []);
+      setApplications(appsData);
+      setMyJobs(jobsData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
