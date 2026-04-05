@@ -97,8 +97,8 @@ const SignupPage = () => {
         phone: formData.phone,
         area: formData.area
       });
-      toast.success(language === 'en' ? 'Registration successful! Please verify your email.' : 'రిజిస్ట్రేషన్ విజయవంతం! దయచేసి మీ ఇమెయిల్‌ని ధృవీకరించండి.');
-      navigate('/verify-otp', { state: { email: formData.email } });
+      toast.success(language === 'en' ? 'Registration successful! Welcome to GramaMitra!' : 'రిజిస్ట్రేషన్ విజయవంతం! GramaMitra కి స్వాగతం!');
+      navigate('/dashboard');
     } catch (error) {
       const detail = error.response?.data?.detail;
       toast.error(typeof detail === 'string' ? detail : 'Registration failed');
