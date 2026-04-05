@@ -68,7 +68,13 @@ const JobDetailPage = () => {
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      toast.error(language === 'en' ? 'Voice input not supported on this browser' : 'ఈ బ్రౌజర్‌లో వాయిస్ గుర్తింపు మద్దతు లేదు');
+      toast.error(language === 'en' ? 'Voice not supported on this browser. Please use Chrome or Safari.' : 'ఈ బ్రౌజర్‌లో వాయిస్ మద్దతు లేదు. దయచేసి Chrome లేదా Safari ఉపయోగించండి.');
+      return;
+    }
+
+    // Check for HTTPS (required for mobile)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      toast.error(language === 'en' ? 'Voice requires HTTPS connection' : 'వాయిస్‌కు HTTPS కనెక్షన్ అవసరం');
       return;
     }
 
@@ -81,7 +87,14 @@ const JobDetailPage = () => {
     const rec = new SR();
     rec.continuous = false; // Short-burst loop for reliability on mobile
     rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    
+    // Set language based on current selection - support both Telugu and English
     rec.lang = language === 'te' ? 'te-IN' : 'en-IN';
+
+    rec.onstart = () => {
+      console.log('Speech recognition started for field:', field, 'Language:', rec.lang);
+    };
 
     rec.onresult = (event) => {
       let final = '';
@@ -100,24 +113,55 @@ const JobDetailPage = () => {
     };
 
     rec.onend = () => {
-      // we check a ref callback or just let it loop if field hasn't changed.
+      // On mobile, don't auto-restart too aggressively
       setTimeout(() => {
-         // To avoid complex dependency closures, we just check if recognitionRef.current exists
-         // and we are simply going to restart it. If user clicked mic off, we would have set it to null.
          if (recognitionRef.current && recognitionRef.current === rec) {
-           try { recognitionRef.current.start(); } catch (_) {}
+           try { 
+             recognitionRef.current.start(); 
+           } catch (e) {
+             console.log('Could not restart recognition:', e);
+             setActiveMicField(null);
+           }
          }
-      }, 150);
+      }, 300); // Increased delay for mobile
     };
 
     rec.onerror = (e) => {
+      console.error('Speech recognition error:', e.error);
       if (e.error === 'not-allowed') {
+        toast.error(language === 'en' ? 'Microphone access denied. Please allow microphone in browser settings.' : 'మైక్రోఫోన్ యాక్సెస్ నిరాకరించబడింది. బ్రౌజర్ సెట్టింగ్స్‌లో మైక్రోఫోన్‌ను అనుమతించండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'no-speech') {
+        // No speech detected - this is normal, just restart
+        console.log('No speech detected, will restart');
+      } else if (e.error === 'network') {
+        toast.error(language === 'en' ? 'Network error. Please check your internet connection.' : 'నెట్‌వర్క్ ఎర్రర్. మీ ఇంటర్నెట్ కనెక్షన్ తనిఖీ చేయండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'audio-capture') {
+        toast.error(language === 'en' ? 'No microphone found. Please connect a microphone.' : 'మైక్రోఫోన్ కనుగొనబడలేదు. మైక్రోఫోన్ కనెక్ట్ చేయండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'aborted') {
+        // User or system aborted - normal behavior
+        console.log('Recognition aborted');
+      } else {
+        toast.error(language === 'en' ? `Voice error: ${e.error}` : `వాయిస్ ఎర్రర్: ${e.error}`);
         setActiveMicField(null);
       }
     };
 
+    rec.onnomatch = () => {
+      console.log('No speech match found');
+    };
+
     recognitionRef.current = rec;
-    try { rec.start(); } catch (_) {}
+    try { 
+      rec.start(); 
+      toast.success(language === 'en' ? 'Listening... Speak now!' : 'వింటోంది... ఇప్పుడు మాట్లాడండి!', { duration: 2000 });
+    } catch (e) {
+      console.error('Failed to start recognition:', e);
+      toast.error(language === 'en' ? 'Could not start voice input. Please try again.' : 'వాయిస్ ఇన్‌పుట్ ప్రారంభించలేకపోయింది. దయచేసి మళ్ళీ ప్రయత్నించండి.');
+      setActiveMicField(null);
+    }
   }, [activeMicField, formData, language]);
 
   useEffect(() => {

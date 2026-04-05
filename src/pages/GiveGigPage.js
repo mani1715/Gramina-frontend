@@ -177,7 +177,13 @@ const GiveGigPage = () => {
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      toast.error(language === 'en' ? 'Voice not supported' : 'వాయిస్ మద్దతు లేదు');
+      toast.error(language === 'en' ? 'Voice not supported on this browser. Please use Chrome or Safari.' : 'ఈ బ్రౌజర్‌లో వాయిస్ మద్దతు లేదు. దయచేసి Chrome లేదా Safari ఉపయోగించండి.');
+      return;
+    }
+
+    // Check for HTTPS (required for mobile)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      toast.error(language === 'en' ? 'Voice requires HTTPS connection' : 'వాయిస్‌కు HTTPS కనెక్షన్ అవసరం');
       return;
     }
 
@@ -193,9 +199,16 @@ const GiveGigPage = () => {
     let currentField = field;
     
     const rec = new SR();
-    rec.continuous = false;
+    rec.continuous = false; // Better for mobile - use short bursts
     rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    
+    // Set language based on current selection - support both Telugu and English
     rec.lang = language === 'te' ? 'te-IN' : 'en-IN';
+
+    rec.onstart = () => {
+      console.log('Speech recognition started for field:', field, 'Language:', rec.lang);
+    };
 
     rec.onresult = (event) => {
       let final = '';
@@ -214,21 +227,56 @@ const GiveGigPage = () => {
     };
 
     rec.onend = () => {
+      // On mobile, don't auto-restart too aggressively
       setTimeout(() => {
         if (activeMicRecognitionRef.current && activeMicRecognitionRef.current === rec) {
-           try { activeMicRecognitionRef.current.start(); } catch (_) {}
+           try { 
+             activeMicRecognitionRef.current.start(); 
+           } catch (e) {
+             console.log('Could not restart recognition:', e);
+             // If restart fails, stop the mic indicator
+             setActiveMicField(null);
+           }
         }
-      }, 150);
+      }, 300); // Increased delay for mobile
     };
 
     rec.onerror = (e) => {
+      console.error('Speech recognition error:', e.error);
       if (e.error === 'not-allowed') {
+        toast.error(language === 'en' ? 'Microphone access denied. Please allow microphone in browser settings.' : 'మైక్రోఫోన్ యాక్సెస్ నిరాకరించబడింది. బ్రౌజర్ సెట్టింగ్స్‌లో మైక్రోఫోన్‌ను అనుమతించండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'no-speech') {
+        // No speech detected - this is normal, just restart
+        console.log('No speech detected, will restart');
+      } else if (e.error === 'network') {
+        toast.error(language === 'en' ? 'Network error. Please check your internet connection.' : 'నెట్‌వర్క్ ఎర్రర్. మీ ఇంటర్నెట్ కనెక్షన్ తనిఖీ చేయండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'audio-capture') {
+        toast.error(language === 'en' ? 'No microphone found. Please connect a microphone.' : 'మైక్రోఫోన్ కనుగొనబడలేదు. మైక్రోఫోన్ కనెక్ట్ చేయండి.');
+        setActiveMicField(null);
+      } else if (e.error === 'aborted') {
+        // User or system aborted - normal behavior
+        console.log('Recognition aborted');
+      } else {
+        toast.error(language === 'en' ? `Voice error: ${e.error}` : `వాయిస్ ఎర్రర్: ${e.error}`);
         setActiveMicField(null);
       }
     };
 
+    rec.onnomatch = () => {
+      console.log('No speech match found');
+    };
+
     activeMicRecognitionRef.current = rec;
-    try { rec.start(); } catch (_) {}
+    try { 
+      rec.start(); 
+      toast.success(language === 'en' ? 'Listening... Speak now!' : 'వింటోంది... ఇప్పుడు మాట్లాడండి!', { duration: 2000 });
+    } catch (e) {
+      console.error('Failed to start recognition:', e);
+      toast.error(language === 'en' ? 'Could not start voice input. Please try again.' : 'వాయిస్ ఇన్‌పుట్ ప్రారంభించలేకపోయింది. దయచేసి మళ్ళీ ప్రయత్నించండి.');
+      setActiveMicField(null);
+    }
   }, [activeMicField, formData, language, stopAllRecognition]);
 
   /* ── GPS auto-location ──────────────────────────────────────── */
@@ -633,24 +681,32 @@ const GiveGigPage = () => {
                 </button>
               </div>
 
-              <div className="mb-6 bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
-                <span className="text-slate-600 font-semibold">{language === 'en' ? 'Form & Dictation Language:' : 'ఫారమ్ & డిక్టేషన్ భాష:'}</span>
-                <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('te')}
-                    className={`px-4 py-2 text-sm font-bold transition-colors ${language === 'te' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    తెలుగు
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('en')}
-                    className={`px-4 py-2 text-sm font-bold transition-colors ${language === 'en' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    English
-                  </button>
+              <div className="mb-6 bg-slate-50 p-4 rounded-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-slate-600 font-semibold">{language === 'en' ? 'Form & Voice Language:' : 'ఫారమ్ & వాయిస్ భాష:'}</span>
+                  <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('te')}
+                      className={`px-4 py-2 text-sm font-bold transition-colors ${language === 'te' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      తెలుగు
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('en')}
+                      className={`px-4 py-2 text-sm font-bold transition-colors ${language === 'en' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      English
+                    </button>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  <Mic className="w-3 h-3" />
+                  {language === 'en' 
+                    ? 'Tap mic button and speak in English' 
+                    : 'మైక్ బటన్ నొక్కి తెలుగులో మాట్లాడండి'}
+                </p>
               </div>
 
               {/* Form */}
