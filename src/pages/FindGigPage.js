@@ -24,7 +24,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const getWageNumber = (wage = '') => parseInt(wage.replace(/[^0-9]/g, '') || '0', 10);
+const getWageNumber = (wage = '') => parseInt(String(wage || '').replace(/[^0-9]/g, '') || '0', 10);
 
 const FindGigPage = () => {
   const { t, language, toggleLanguage } = useLanguage();
@@ -75,15 +75,15 @@ const FindGigPage = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(job => 
-        job.title?.toLowerCase().includes(query) ||
-        job.description?.toLowerCase().includes(query) ||
-        job.location?.toLowerCase().includes(query)
+        String(job.title || '').toLowerCase().includes(query) ||
+        String(job.description || '').toLowerCase().includes(query) ||
+        String(job.location || '').toLowerCase().includes(query)
       );
     }
 
     // Filter by wage range
     filtered = filtered.filter(job => {
-      const wageNum = parseInt(job.wage?.replace(/[^0-9]/g, '') || '0');
+      const wageNum = parseInt(String(job.wage || '').replace(/[^0-9]/g, '') || '0');
       return wageNum >= budgetRange[0] && wageNum <= budgetRange[1];
     });
 

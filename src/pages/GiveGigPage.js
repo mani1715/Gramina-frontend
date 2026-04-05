@@ -35,7 +35,7 @@ import GigChatModal from '../components/GigChatModal';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 /* ─── Helpers ────────────────────────────────────────────────── */
-const getWageNumber = (wage = '') => parseInt(wage.replace(/[^0-9]/g, '') || '0', 10);
+const getWageNumber = (wage = '') => parseInt(String(wage || '').replace(/[^0-9]/g, '') || '0', 10);
 
 const STATUS_CONFIG = {
   pending:  { label: { en: 'Pending',  te: 'పెండింగ్'  }, color: 'bg-amber-100 text-amber-700'  },
@@ -123,9 +123,9 @@ const GiveGigPage = () => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(job =>
-        job.title?.toLowerCase().includes(q) ||
-        job.location?.toLowerCase().includes(q) ||
-        job.description?.toLowerCase().includes(q)
+        String(job.title || '').toLowerCase().includes(q) ||
+        String(job.location || '').toLowerCase().includes(q) ||
+        String(job.description || '').toLowerCase().includes(q)
       );
     }
 
