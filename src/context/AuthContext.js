@@ -5,6 +5,11 @@ const ENV_API_URL = process.env.REACT_APP_BACKEND_URL;
 // If API_URL is undefined, default it to `/` so it doesn't use `undefined/`
 const API_URL = ENV_API_URL === 'undefined' || !ENV_API_URL ? '' : ENV_API_URL;
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.headers.common['Accept'] = 'application/json';
+
 // Key used to track whether the user has ever logged in this browser
 const SESSION_KEY = 'gm_has_session';
 
