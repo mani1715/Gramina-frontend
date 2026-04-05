@@ -137,7 +137,7 @@ const JobDetailPage = () => {
 
   const fetchJob = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/jobs/${jobId}`);
+      const response = await axios.get(`${API_URL}/api/jobs/${jobId}`, { withCredentials: true });
       setJob(response.data);
     } catch (error) {
       toast.error(language === 'en' ? 'Job not found' : 'ఉద్యోగం కనుగొనబడలేదు');

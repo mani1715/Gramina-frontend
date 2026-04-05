@@ -52,7 +52,7 @@ const FindGigPage = () => {
   const fetchAllJobs = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/jobs`);
+      const response = await axios.get(`${API_URL}/api/jobs`, { withCredentials: true });
       const data = Array.isArray(response.data) ? response.data : (response.data?.jobs || response.data?.data || []);
       setAllJobs(data);
       setJobs(data);
@@ -119,7 +119,18 @@ const FindGigPage = () => {
   useEffect(() => {
     const applyTranslation = async () => {
       if (jobs.length === 0) { setDisplayJobs([]); return; }
-      const targetLang = language === 'te' ? 'telugu' : 'english';
+      
+      // Skip translation for English - use original data directly
+      if (language === 'en') {
+        setDisplayJobs(jobs.map(j => ({
+          ...j,
+          _displayTitle: j.title,
+          _displayDesc: j.description
+        })));
+        return;
+      }
+      
+      const targetLang = 'telugu';
       const titleTexts = jobs.map(j => j.title || '');
       const descTexts = jobs.map(j => j.description || '');
       const [transTitle, transDesc] = await Promise.all([
