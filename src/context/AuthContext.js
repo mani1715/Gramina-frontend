@@ -103,8 +103,13 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Ignore logout errors silently
     }
+    // Clear all local storage items related to session
     localStorage.removeItem(SESSION_KEY);
+    // Clear any cached data
+    sessionStorage.clear();
+    // Force state update
     setUser(false);
+    // Navigate to login page - handled by component calling logout
   };
 
   const updateProfile = async (profileData) => {

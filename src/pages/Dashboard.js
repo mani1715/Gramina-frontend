@@ -66,8 +66,10 @@ const Dashboard = () => {
 
   const handleLogoutConfirmed = async () => {
     setShowLogoutConfirm(false);
+    // Navigate first to avoid ProtectedRoute redirect race condition
+    navigate('/', { replace: true });
+    // Then clear the session
     await logout();
-    navigate('/');
   };
 
   return (
