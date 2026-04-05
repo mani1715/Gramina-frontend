@@ -66,6 +66,9 @@ export const AuthProvider = ({ children }) => {
       userData,
       { withCredentials: true }
     );
+    if (typeof response.data === 'string') {
+      throw new Error('Invalid backend response');
+    }
     return response.data;
   };
 
