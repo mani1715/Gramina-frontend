@@ -62,6 +62,7 @@ const GiveGigPage = () => {
   const [jobToClose, setJobToClose] = useState(null);
   const [chatJob, setChatJob] = useState(null);
   const [editingJobId, setEditingJobId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   /* Applicants */
   const [selectedJob, setSelectedJob] = useState(null);
@@ -95,12 +96,14 @@ const GiveGigPage = () => {
   }, []); // eslint-disable-line
 
   const fetchMyJobs = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/my-jobs`, { withCredentials: true });
       const data = Array.isArray(res.data) ? res.data : (res.data?.jobs || []);
       setMyJobs(data);
     } catch (err) {
       console.error('Failed to fetch jobs:', err);
+      toast.error(language === 'en' ? 'Failed to load your jobs' : 'మీ ఉద్యోగాలు లోడ్ చేయడంలో విఫలమైంది');
     } finally {
       setLoading(false);
     }
@@ -343,6 +346,8 @@ const GiveGigPage = () => {
       return;
     }
 
+    setSubmitting(true);
+
     let latitude = null, longitude = null;
     if (navigator.geolocation && !editingJobId) {
       try {
@@ -377,6 +382,8 @@ const GiveGigPage = () => {
     } catch (err) {
       const detail = err.response?.data?.detail;
       toast.error(typeof detail === 'string' ? detail : (editingJobId ? 'Failed to update job' : 'Failed to post job'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -834,10 +841,18 @@ const GiveGigPage = () => {
 
                 <button
                   type="submit"
+                  disabled={submitting}
                   data-testid="submit-job-btn"
-                  className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xl transition-colors"
+                  className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {t('submit')}
+                  {submitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {language === 'en' ? 'Posting...' : 'పోస్ట్ చేస్తోంది...'}
+                    </>
+                  ) : (
+                    t('submit')
+                  )}
                 </button>
               </form>
             </motion.div>
